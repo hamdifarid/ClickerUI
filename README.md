@@ -15,5 +15,8 @@
  - The program automatically stores the data in a file to recall last created rectangle and speed..
 
 ## Color Clicking (Shift + D) to start
--Select a specific color to click on.
+
+ - Select a specific color to click on
+
+.
 
