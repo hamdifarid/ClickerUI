@@ -18,5 +18,5 @@
 
  - Select a specific color to click on
 
-.
+
 
