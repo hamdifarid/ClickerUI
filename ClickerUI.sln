@@ -5,6 +5,8 @@ VisualStudioVersion = 17.7.34031.279
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ClickerUI", "ClickerUI\ClickerUI.csproj", "{68B64A08-A6BB-4478-AD76-0FC1D0EE153D}"
 EndProject
+Project("{54435603-DBB4-11D2-8724-00A0C9A8B90C}") = "ClickerUI.Setup", "ClickerUI.Setup\ClickerUI.Setup.vdproj", "{615F7236-8022-4B1F-9542-95B2503DFC96}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -15,11 +17,17 @@ Global
 		{68B64A08-A6BB-4478-AD76-0FC1D0EE153D}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{68B64A08-A6BB-4478-AD76-0FC1D0EE153D}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{68B64A08-A6BB-4478-AD76-0FC1D0EE153D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{615F7236-8022-4B1F-9542-95B2503DFC96}.Debug|Any CPU.ActiveCfg = Debug
+		{615F7236-8022-4B1F-9542-95B2503DFC96}.Release|Any CPU.ActiveCfg = Release
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {081338FB-9B78-4DC0-9B29-76EED720AF3A}
+	EndGlobalSection
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 EndGlobal

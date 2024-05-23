@@ -379,7 +379,7 @@ namespace ClickerUI
             }
 
         }
-
+            
         private void colorClicker()
         {
             Thread.Sleep(3000);
