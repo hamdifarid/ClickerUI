@@ -139,11 +139,11 @@ namespace ClickerUI
             {
                 monitoringThread.Abort();
             }
-            if(indiscriminateThread !=null &&  indiscriminateThread.IsAlive)
+            if (indiscriminateThread != null && indiscriminateThread.IsAlive)
             {
                 indiscriminateThread.Abort();
             }
-            if(monitorColorThread != null && monitorColorThread.IsAlive)
+            if (monitorColorThread != null && monitorColorThread.IsAlive)
             {
                 monitorColorThread.Abort();
             }
@@ -158,10 +158,10 @@ namespace ClickerUI
             label1.Text = "Started";
             setEnabledAll(false);
             setRect();
-            this.WindowState = FormWindowState.Minimized;
             bool isValidated = validate();
             if (!isRunning && isValidated)
             {
+                this.WindowState = FormWindowState.Minimized;
                 isRunning = true;
                 overlayForm = new OverlayForm(rectLeft, rectRight, rectTop, rectBottom);
                 overlayForm.Show();
@@ -171,6 +171,7 @@ namespace ClickerUI
             else if (!isValidated)
             {
                 label1.Text = "Please take care of the rules \n\n X1 > X2 and Y1 > Y2 \n\n or click speed should be positive\n or Click Zone is already " + isRunning.ToString();
+                stopMethod();
             }
         }
         private void setRect()
@@ -186,7 +187,7 @@ namespace ClickerUI
             textBox4.Text = rectBottom.ToString();
             clickDelay = textBox5.Text.Length == 0 ? rectData.ClickDelay : Convert.ToInt32(textBox5.Text); //500
             textBox5.Text = clickDelay.ToString();
-            storeInJson(rectLeft,rectRight,rectTop, rectBottom,clickDelay);
+            storeInJson(rectLeft, rectRight, rectTop, rectBottom, clickDelay);
 
         }
 
@@ -199,7 +200,7 @@ namespace ClickerUI
 
         }
 
-        private  RectangleData readJson()
+        private RectangleData readJson()
         {
             bool fileExists = File.Exists("rectangleData.json");
             if (fileExists)
@@ -208,7 +209,7 @@ namespace ClickerUI
                 RectangleData data = JsonConvert.DeserializeObject<RectangleData>(jsonString);
                 return data;
             }
-            RectangleData storeData = storeInJson(798, 1081, 700, 768,500);
+            RectangleData storeData = storeInJson(798, 1081, 700, 768, 500);
             return storeData;
         }
 
@@ -242,12 +243,14 @@ namespace ClickerUI
 
         private bool validate()
         {
-            if (rectRight < rectLeft || rectTop < rectBottom)
+            if (rectRight < rectLeft || rectTop < rectBottom && clickDelay > 0)
             {
+                UpdateLabel("Please set Click delay greater than 0", color: Color.Red);
                 return true;
             }
-            if (clickDelay < 0)
+            if (clickDelay <= 0)
             {
+                UpdateLabel("Please set Click delay greater than 0", color: Color.Red);
                 return false;
             }
             return false;
@@ -329,7 +332,7 @@ namespace ClickerUI
         }
 
 
-       
+
 
         private void Clicknow()
         {
@@ -361,10 +364,19 @@ namespace ClickerUI
             setEnabledAll(false);
             //colorClicker();
             setIndiscriminate();
-            isRunning = true;
-            label1.Text = "Started";
-            monitorColorThread = new Thread(colorClicker);
-            monitorColorThread.Start();
+
+            bool isValidated = validate();
+            if (isValidated)
+            {
+                isRunning = true;
+                label1.Text = "Started";
+                monitorColorThread = new Thread(colorClicker);
+                monitorColorThread.Start();
+            }
+            else
+            {
+                stopMethod();
+            }
 
         }
 
@@ -416,12 +428,20 @@ namespace ClickerUI
         {
             setEnabledAll(false);
             setIndiscriminate();
-            this.WindowState = FormWindowState.Minimized;
-            isRunning = true;
-            label1.Text = "Started";
+            bool isValidated = validate();
+            if (isValidated)
+            {
+                this.WindowState = FormWindowState.Minimized;
+                isRunning = true;
+                label1.Text = "Started";
 
-            indiscriminateThread = new Thread(indiscriminateClicker);
-            indiscriminateThread.Start();
+                indiscriminateThread = new Thread(indiscriminateClicker);
+                indiscriminateThread.Start();
+            }
+            else
+            {
+                stopMethod();
+            }
 
         }
 
@@ -435,6 +455,5 @@ namespace ClickerUI
             }
         }
 
-       
     }
 }
