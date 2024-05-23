@@ -191,15 +191,6 @@ namespace ClickerUI
 
         }
 
-        private void setIndiscriminate()
-        {
-            RectangleData rectData = readJson();
-            clickDelay = textBox5.Text.Length == 0 ? rectData.ClickDelay : Convert.ToInt32(textBox5.Text); //500
-            textBox5.Text = clickDelay.ToString();
-            storeInJson(rectData.RectLeft, rectData.RectRight, rectData.RectTop, rectData.RectBottom, clickDelay);
-
-        }
-
         private RectangleData readJson()
         {
             bool fileExists = File.Exists("rectangleData.json");
@@ -363,7 +354,7 @@ namespace ClickerUI
         {
             setEnabledAll(false);
             //colorClicker();
-            setIndiscriminate();
+            setRect();
 
             bool isValidated = validate();
             if (isValidated)
@@ -427,7 +418,7 @@ namespace ClickerUI
         private void startIndiscriminateClicker()
         {
             setEnabledAll(false);
-            setIndiscriminate();
+            setRect();
             bool isValidated = validate();
             if (isValidated)
             {
