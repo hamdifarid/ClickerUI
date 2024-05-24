@@ -290,15 +290,58 @@ namespace ClickerUI
             }
         }
 
-        private Color GetPixelColor(int x, int y)
+        private Color GetAveragePixelColor(int centerX, int centerY, int radius)
         {
-            Bitmap screenPixel = new Bitmap(1, 1);
-            Graphics g = Graphics.FromImage(screenPixel);
-            g.CopyFromScreen(x, y, 0, 0, new Size(1, 1));
-            Color pixelColor = screenPixel.GetPixel(0, 0);
-            screenPixel.Dispose();
-            return pixelColor;
+            // Define the area around the cursor to sample
+            int startX = centerX- radius ;
+            int startY = centerY - radius;
+            int width = 3 * radius + 1;
+            int height = 3 * radius + 1;
+
+            // Create a bitmap to store sampled pixels
+            Bitmap screenPixels = new Bitmap(width, height);
+
+            // Use Graphics to copy pixels from the screen to the bitmap
+            using (Graphics g = Graphics.FromImage(screenPixels))
+            {
+                g.CopyFromScreen(startX, startY, 0, 0, new Size(width, height));
+            }
+
+            // Draw the sampling area circle
+            //using (Graphics g = Graphics.FromHwnd(IntPtr.Zero)) // Graphics object for the entire screen
+            //using (Pen pen = new Pen(Color.Red, 1))
+            //{
+            //    g.DrawEllipse(pen, centerX - radius, centerY - radius, 2 * radius, 2 * radius);
+            //}
+
+            // Calculate the total values for each color component
+            int totalR = 0, totalG = 0, totalB = 0;
+            for (int y = 0; y < height; y++)
+            {
+                for (int x = 0; x < width; x++)
+                {
+                    Color pixelColor = screenPixels.GetPixel(x, y);
+                    totalR += pixelColor.R;
+                    totalG += pixelColor.G;
+                    totalB += pixelColor.B;
+                }
+            }
+
+            // Calculate the average color
+            int totalPixels = width * height;
+            int avgR = totalR / totalPixels;
+            int avgG = totalG / totalPixels;
+            int avgB = totalB / totalPixels;
+
+            // Dispose the bitmap
+            screenPixels.Dispose();
+
+            // Return the average color
+            return Color.FromArgb(avgR, avgG, avgB);
         }
+
+
+
 
         private bool IsNear(Point p, int left, int right, int top, int bottom, int threshold)
         {
@@ -370,14 +413,35 @@ namespace ClickerUI
             }
 
         }
-            
+
+        
+
         private void colorClicker()
         {
-            Thread.Sleep(3000);
+            // Thread.Sleep(3000); // Consider removing this sleep if it's not needed
             while (isRunning)
             {
+                float scalingFactor = WindowScale.getScalingFactor();
                 Point cursorPos = Cursor.Position;
-                Color pixelColor = GetPixelColor(cursorPos.X, cursorPos.Y);
+
+                float scale = 1f; 
+                //0.8f for 125%
+                //
+                if(scalingFactor == 1.25f)
+                {
+                    scale = 0.8f;
+                }
+                else if(scalingFactor == 1.5f)
+                {
+                    scale = 0.67f;
+                }
+
+                // Scale the cursor position
+                int scaledX = (int)(cursorPos.X / scale);
+                int scaledY = (int)(cursorPos.Y / scale);
+
+                // Get the average pixel color using scaled coordinates
+                Color pixelColor = GetAveragePixelColor(scaledX, scaledY, 5);
 
                 comboBox1.Invoke(new Action(() =>
                 {
@@ -387,10 +451,10 @@ namespace ClickerUI
                         label13.Text = pixelColor.ToString();
                         label13.ForeColor = pixelColor;
 
-                        if (IsColorSimilar(pixelColor, targetColor, tolerance: 100)) // Adjust tolerance as needed
+                        if (IsColorSimilar(pixelColor, targetColor, tolerance: 70)) // Adjust tolerance as needed
                         {
                             UpdateLabel("Target Color Detected", Color.Green);
-                            Clicknow();
+                            // Clicknow();
                         }
                         else
                         {
@@ -402,6 +466,7 @@ namespace ClickerUI
                 Thread.Sleep(clickDelay);
             }
         }
+
 
         private bool IsColorSimilar(Color color1, Color color2, int tolerance)
         {
