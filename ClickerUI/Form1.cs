@@ -36,6 +36,13 @@ namespace ClickerUI
         private GlobalKeyboardHook keyboardHook;
         #endregion
 
+        #region DLL Imports
+        [DllImport("user32.dll")]
+        static extern bool GetCursorPos(ref Point lpPoint);
+
+        [DllImport("user32.dll")]
+        static extern void mouse_event(int dwFlags, int dx, int dy, int dwData, int dwExtraInfo);
+        #endregion
 
         public Form1()
         {
@@ -44,48 +51,77 @@ namespace ClickerUI
             keyboardHook.KeyPressed += KeyboardHook_KeyPressed;
 
         }
+
+
+        #region Zone Clicker
+        private void button1_Click(object sender, EventArgs e)
+        {
+            startMethod();
+        }
+        private void stopMethod()
+        {
+            label1.Text = "Stopped";
+            isRunning = false;
+            setEnabledAll(true);
+            if (monitoringThread != null && monitoringThread.IsAlive)
+            {
+                monitoringThread.Abort();
+            }
+            if (indiscriminateThread != null && indiscriminateThread.IsAlive)
+            {
+                indiscriminateThread.Abort();
+            }
+            if (monitorColorThread != null && monitorColorThread.IsAlive)
+            {
+                monitorColorThread.Abort();
+            }
+            if (overlayForm != null)
+            {
+                overlayForm.Close();
+            }
+        }
+
+        private void startMethod()
+        {
+            label1.Text = "Started";
+            setEnabledAll(false);
+            setRect();
+            bool isValidated = validate();
+            if (!isRunning && isValidated)
+            {
+                this.WindowState = FormWindowState.Minimized;
+                isRunning = true;
+                overlayForm = new OverlayForm(rectLeft, rectRight, rectTop, rectBottom);
+                overlayForm.Show();
+                monitoringThread = new Thread(MonitorCursor);
+                monitoringThread.Start();
+            }
+            else if (!isValidated)
+            {
+                label1.Text = "Please take care of the rules \n\n X1 > X2 and Y1 > Y2 \n\n or click speed should be positive\n or Click Zone is already " + isRunning.ToString();
+                stopMethod();
+            }
+        }
+
+        private void button2_Click(object sender, EventArgs e)
+        {
+            stopMethod();
+        }
+
+
+        #endregion
+
+        #region Events
+
+        const int MOUSEEVENTF_LEFTDOWN = 0x0002;
+        const int MOUSEEVENTF_LEFTUP = 0x0004;
         private void ComboBox_selectionIndexChanged(ComboBox comboBox, PictureBox pictureBox)
         {
             changePictureBoxColor(comboBox, pictureBox);
         }
 
-        private void changePictureBoxColor(ComboBox comboBox, PictureBox pictureBox)
-        {
-            Color selectedColor = (Color)comboBox.SelectedItem;
-
-            pictureBox.BackColor = selectedColor;
-        }
-
-        private void fillComboColorBox(ComboBox comboBox)
-        {
-            comboBox.Items.Clear();
-            List<Color> colors = new List<Color>();
-
-            foreach (KnownColor knownColor in Enum.GetValues(typeof(KnownColor)))
-            {
-                Color color = Color.FromKnownColor(knownColor);
-                colors.Add(color);
-            }
-
-            // Add colors to the combo box
-            foreach (var color in colors)
-            {
-                comboBox.Items.Add(color);
-            }
-
-            if (comboBox.Items.Count > 0)
-            {
-                comboBox.SelectedIndex = 0;
-            }
-        }
-
-        private void button1_Click(object sender, EventArgs e)
-        {
-            startMethod();
-        }
         private void KeyboardHook_KeyPressed(object sender, KeyPressedEventArgs e)
         {
-            // Check for the desired hotkey combination
             if (e.KeyPressed == Keys.G && Control.ModifierKeys == Keys.Shift)
             {
                 if (!isRunning)
@@ -134,50 +170,10 @@ namespace ClickerUI
                 }
             }
         }
-        private void stopMethod()
-        {
-            label1.Text = "Stopped";
-            isRunning = false;
-            setEnabledAll(true);
-            if (monitoringThread != null && monitoringThread.IsAlive)
-            {
-                monitoringThread.Abort();
-            }
-            if (indiscriminateThread != null && indiscriminateThread.IsAlive)
-            {
-                indiscriminateThread.Abort();
-            }
-            if (monitorColorThread != null && monitorColorThread.IsAlive)
-            {
-                monitorColorThread.Abort();
-            }
-            if (overlayForm != null)
-            {
-                overlayForm.Close();
-            }
-        }
 
-        private void startMethod()
-        {
-            label1.Text = "Started";
-            setEnabledAll(false);
-            setRect();
-            bool isValidated = validate();
-            if (!isRunning && isValidated)
-            {
-                this.WindowState = FormWindowState.Minimized;
-                isRunning = true;
-                overlayForm = new OverlayForm(rectLeft, rectRight, rectTop, rectBottom);
-                overlayForm.Show();
-                monitoringThread = new Thread(MonitorCursor);
-                monitoringThread.Start();
-            }
-            else if (!isValidated)
-            {
-                label1.Text = "Please take care of the rules \n\n X1 > X2 and Y1 > Y2 \n\n or click speed should be positive\n or Click Zone is already " + isRunning.ToString();
-                stopMethod();
-            }
-        }
+        #endregion
+
+        #region Helper / Misc. Methods UpdateLabel, IsNear...
         private void setRect()
         {
             RectangleData rectData = readJson();
@@ -196,52 +192,6 @@ namespace ClickerUI
             storeInJson(rectLeft, rectRight, rectTop, rectBottom, clickDelay, tolerance);
 
         }
-
-        private RectangleData readJson()
-        {
-            bool fileExists = File.Exists("rectangleData.json");
-            if (fileExists)
-            {
-                string jsonString = File.ReadAllText("rectangleData.json");
-                RectangleData data = JsonConvert.DeserializeObject<RectangleData>(jsonString);
-                return data;
-            }
-            RectangleData storeData = storeInJson(798, 1081, 700, 768, 500, 140);
-            return storeData;
-        }
-
-        private RectangleData storeInJson(int rectLeft, int rectRight, int rectTop, int rectBottom, int clickDelay, int tolerance)
-        {
-            RectangleData data = new RectangleData(rectLeft, rectRight, rectTop, rectBottom, clickDelay, tolerance);
-
-            string jsonString = JsonConvert.SerializeObject(data, Formatting.Indented);
-
-            File.WriteAllText("rectangleData.json", jsonString);
-            return data;
-        }
-
-        private void setEnabledAll(bool value)
-        {
-            button1.Enabled = value;
-            button3.Enabled = value;
-            button4.Enabled = value;
-            button5.Enabled = value;
-            button6.Enabled= value;
-            button7.Enabled= value;
-            textBox1.Enabled = value;
-            textBox2.Enabled = value;
-            textBox3.Enabled = value;
-            textBox4.Enabled = value;
-            textBox5.Enabled = value;
-            textBox6.Enabled = value;
-
-            foreach (var comboBox in comboBoxList)
-            {
-                comboBox.Enabled = value;
-            }
-
-        }
-
         private bool validate()
         {
             if (rectRight < rectLeft || rectTop < rectBottom && clickDelay > 0)
@@ -256,21 +206,6 @@ namespace ClickerUI
             }
             return false;
         }
-
-        private void button2_Click(object sender, EventArgs e)
-        {
-            stopMethod();
-        }
-
-        [DllImport("user32.dll")]
-        static extern bool GetCursorPos(ref Point lpPoint);
-
-        [DllImport("user32.dll")]
-        static extern void mouse_event(int dwFlags, int dx, int dy, int dwData, int dwExtraInfo);
-
-        const int MOUSEEVENTF_LEFTDOWN = 0x0002;
-        const int MOUSEEVENTF_LEFTUP = 0x0004;
-
         private void MonitorCursor()
         {
             while (isRunning)
@@ -278,9 +213,7 @@ namespace ClickerUI
                 Point defPnt = new Point();
                 GetCursorPos(ref defPnt);
 
-                //// Define the rectangle coordinates and dimensions
-                //int rectLeft = 798, rectRight = 1081, rectTop = 700, rectBottom = 768;
-                int nearThreshold = 50; // Distance in pixels considered as 'near'
+                int nearThreshold = 50;
 
                 if (defPnt.X > rectLeft && defPnt.X < rectRight && defPnt.Y > rectTop && defPnt.Y < rectBottom)
                 {
@@ -298,56 +231,29 @@ namespace ClickerUI
                 Thread.Sleep(clickDelay);
             }
         }
-
-        private Color GetAveragePixelColor(int centerX, int centerY, int radius)
+        private void setEnabledAll(bool value)
         {
-            // Define the area around the cursor to sample
-            int startX = centerX - radius;
-            int startY = centerY - radius;
-            int width = 3 * radius + 1;
-            int height = 3 * radius + 1;
+            button1.Enabled = value;
+            button3.Enabled = value;
+            button4.Enabled = value;
+            button5.Enabled = value;
+            button6.Enabled = value;
+            button7.Enabled = value;
+            textBox1.Enabled = value;
+            textBox2.Enabled = value;
+            textBox3.Enabled = value;
+            textBox4.Enabled = value;
+            textBox5.Enabled = value;
+            textBox6.Enabled = value;
 
-            // Create a bitmap to store sampled pixels
-            Bitmap screenPixels = new Bitmap(width, height);
-
-            // Use Graphics to copy pixels from the screen to the bitmap
-            using (Graphics g = Graphics.FromImage(screenPixels))
+            foreach (var comboBox in comboBoxList)
             {
-                g.CopyFromScreen(startX, startY, 0, 0, new Size(width, height));
+                comboBox.Enabled = value;
             }
 
-            // Draw the sampling area circle
-            //using (Graphics g = Graphics.FromHwnd(IntPtr.Zero)) // Graphics object for the entire screen
-            //using (Pen pen = new Pen(Color.Red, 1))
-            //{
-            //    g.DrawEllipse(pen, centerX - radius, centerY - radius, 2 * radius, 2 * radius);
-            //}
-
-            // Calculate the total values for each color component
-            int totalR = 0, totalG = 0, totalB = 0;
-            for (int y = 0; y < height; y++)
-            {
-                for (int x = 0; x < width; x++)
-                {
-                    Color pixelColor = screenPixels.GetPixel(x, y);
-                    totalR += pixelColor.R;
-                    totalG += pixelColor.G;
-                    totalB += pixelColor.B;
-                }
-            }
-
-            // Calculate the average color
-            int totalPixels = width * height;
-            int avgR = totalR / totalPixels;
-            int avgG = totalG / totalPixels;
-            int avgB = totalB / totalPixels;
-
-            // Dispose the bitmap
-            screenPixels.Dispose();
-
-            // Return the average color
-            return Color.FromArgb(avgR, avgG, avgB);
         }
+
+
 
         private bool IsNear(Point p, int left, int right, int top, int bottom, int threshold)
         {
@@ -376,7 +282,31 @@ namespace ClickerUI
             mouse_event(MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0);
             mouse_event(MOUSEEVENTF_LEFTUP, 0, 0, 0, 0);
         }
+        #endregion
 
+        #region Reset, ReadingJson, StoringJson
+        private RectangleData readJson()
+        {
+            bool fileExists = File.Exists("rectangleData.json");
+            if (fileExists)
+            {
+                string jsonString = File.ReadAllText("rectangleData.json");
+                RectangleData data = JsonConvert.DeserializeObject<RectangleData>(jsonString);
+                return data;
+            }
+            RectangleData storeData = storeInJson(798, 1081, 700, 768, 500, 140);
+            return storeData;
+        }
+
+        private RectangleData storeInJson(int rectLeft, int rectRight, int rectTop, int rectBottom, int clickDelay, int tolerance)
+        {
+            RectangleData data = new RectangleData(rectLeft, rectRight, rectTop, rectBottom, clickDelay, tolerance);
+
+            string jsonString = JsonConvert.SerializeObject(data, Formatting.Indented);
+
+            File.WriteAllText("rectangleData.json", jsonString);
+            return data;
+        }
         private void button3_Click(object sender, EventArgs e)
         {
             RectangleData rectData = readJson();
@@ -386,12 +316,121 @@ namespace ClickerUI
             textBox4.Text = rectData.RectBottom.ToString();
             textBox5.Text = rectData.ClickDelay.ToString();
         }
+        #endregion
+
+        #region Indiscriminate Clicker
 
         private void button4_Click(object sender, EventArgs e)
         {
             startIndiscriminateClicker();
         }
 
+        private void startIndiscriminateClicker()
+        {
+            setEnabledAll(false);
+            setRect();
+            clickDelay = 1;
+            textBox5.Text = clickDelay.ToString();
+
+            bool isValidated = validate();
+            if (isValidated)
+            {
+                this.WindowState = FormWindowState.Minimized;
+                isRunning = true;
+                label1.Text = "Started";
+
+                indiscriminateThread = new Thread(indiscriminateClicker);
+                indiscriminateThread.Start();
+            }
+            else
+            {
+                stopMethod();
+            }
+
+        }
+
+        private void indiscriminateClicker()
+        {
+            Thread.Sleep(1000);
+            while (isRunning)
+            {
+                Clicknow();
+                Thread.Sleep(clickDelay);
+            }
+        }
+
+        #endregion
+
+        #region ColorClicker
+        private void changePictureBoxColor(ComboBox comboBox, PictureBox pictureBox)
+        {
+            Color selectedColor = (Color)comboBox.SelectedItem;
+
+            pictureBox.BackColor = selectedColor;
+        }
+
+        private void fillComboColorBox(ComboBox comboBox)
+        {
+            comboBox.Items.Clear();
+            List<Color> colors = new List<Color>();
+
+            foreach (KnownColor knownColor in Enum.GetValues(typeof(KnownColor)))
+            {
+                Color color = Color.FromKnownColor(knownColor);
+                colors.Add(color);
+            }
+
+            foreach (var color in colors)
+            {
+                comboBox.Items.Add(color);
+            }
+
+            if (comboBox.Items.Count > 0)
+            {
+                comboBox.SelectedIndex = 0;
+            }
+        }
+        private Color GetAveragePixelColor(int centerX, int centerY, int radius)
+        {
+            int startX = centerX - radius;
+            int startY = centerY - radius;
+            int width = 3 * radius + 1;
+            int height = 3 * radius + 1;
+
+            Bitmap screenPixels = new Bitmap(width, height);
+
+            using (Graphics g = Graphics.FromImage(screenPixels))
+            {
+                g.CopyFromScreen(startX, startY, 0, 0, new Size(width, height));
+            }
+
+            using (Graphics g = Graphics.FromHwnd(IntPtr.Zero)) 
+            using (Pen pen = new Pen(Color.Red, 1))
+            {
+                g.DrawEllipse(pen, centerX - radius, centerY - radius, 2 * radius, 2 * radius);
+            }
+
+            int totalR = 0, totalG = 0, totalB = 0;
+            for (int y = 0; y < height; y++)
+            {
+                for (int x = 0; x < width; x++)
+                {
+                    Color pixelColor = screenPixels.GetPixel(x, y);
+                    totalR += pixelColor.R;
+                    totalG += pixelColor.G;
+                    totalB += pixelColor.B;
+                }
+            }
+
+            int totalPixels = width * height;
+            int avgR = totalR / totalPixels;
+            int avgG = totalG / totalPixels;
+            int avgB = totalB / totalPixels;
+
+            screenPixels.Dispose();
+
+            return Color.FromArgb(avgR, avgG, avgB);
+        }
         private void button5_Click(object sender, EventArgs e)
         {
             startColorClicker();
@@ -403,12 +442,18 @@ namespace ClickerUI
             setRect();
 
             bool isValidated = validate();
-            if (isValidated)
+            if (isValidated && comboBoxList.Count > 0)
             {
                 isRunning = true;
                 label1.Text = "Started";
                 monitorColorThread = new Thread(colorClicker);
                 monitorColorThread.Start();
+            }
+            else if (comboBoxList.Count == 0)
+            {
+                label1.Text = "No Colors";
+                MessageBox.Show("Please Add some Colors");
+                setEnabledAll(true);
             }
             else
             {
@@ -416,7 +461,6 @@ namespace ClickerUI
             }
 
         }
-
         private void colorClicker()
         {
             float scalingFactor = WindowScale.getScalingFactor();
@@ -434,7 +478,7 @@ namespace ClickerUI
                     scale = 0.65f;
                     break;
             }
-            clickDelay = 1;
+
             while (isRunning)
             {
                 Point cursorPos = Cursor.Position;
@@ -485,55 +529,6 @@ namespace ClickerUI
                 Thread.Sleep(1);
             }
         }
-
-        private bool IsColorSimilar(Color targetColor, List<Color> selectedColors, int tolerance)
-        {
-            foreach (Color selectedColor in selectedColors)
-            {
-                int deltaR = Math.Abs(targetColor.R - selectedColor.R);
-                int deltaG = Math.Abs(targetColor.G - selectedColor.G);
-                int deltaB = Math.Abs(targetColor.B - selectedColor.B);
-
-
-                if (deltaR <= tolerance && deltaG <= tolerance && deltaB <= tolerance)
-                {
-                    return true;
-                }
-            }
-            return false;
-        }
-
-        private void startIndiscriminateClicker()
-        {
-            setEnabledAll(false);
-            setRect();
-            bool isValidated = validate();
-            if (isValidated)
-            {
-                this.WindowState = FormWindowState.Minimized;
-                isRunning = true;
-                label1.Text = "Started";
-
-                indiscriminateThread = new Thread(indiscriminateClicker);
-                indiscriminateThread.Start();
-            }
-            else
-            {
-                stopMethod();
-            }
-
-        }
-
-        private void indiscriminateClicker()
-        {
-            Thread.Sleep(1000);
-            while (isRunning)
-            {
-                Clicknow();
-                Thread.Sleep(clickDelay);
-            }
-        }
-
         private void button6_Click(object sender, EventArgs e)
         {
             ComboBox newComboBox = new ComboBox();
@@ -576,9 +571,28 @@ namespace ClickerUI
             }
             else
             {
-                MessageBox.Show("No ComboBox or PictureBox to delete.", "Info", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                MessageBox.Show("No ComboBox or PictureBox to delete.");
             }
         }
+        private bool IsColorSimilar(Color targetColor, List<Color> selectedColors, int tolerance)
+        {
+            foreach (Color selectedColor in selectedColors)
+            {
+                int deltaR = Math.Abs(targetColor.R - selectedColor.R);
+                int deltaG = Math.Abs(targetColor.G - selectedColor.G);
+                int deltaB = Math.Abs(targetColor.B - selectedColor.B);
+
+
+                if (deltaR <= tolerance && deltaG <= tolerance && deltaB <= tolerance)
+                {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        #endregion
+
 
     }
 }
