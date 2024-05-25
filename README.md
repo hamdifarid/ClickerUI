@@ -6,6 +6,11 @@ An app designed to assist with automated clicking.
 - The app currently features three functions.
 - **Press Shift + Y to halt clicking.** ⛔
 
+Installation 
+1. Download the Release.zip from the releases.
+2. simply click on setup.exe to install.
+3. Enjoy!
+
 ## Indiscriminate Clicking (Shift + H) to start 🎯
 - Clicks indiscriminately based on the last set delay.
 
