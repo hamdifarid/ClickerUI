@@ -1,17 +1,19 @@
-# ClickerUI
-An app made to help people with automated clicking. 
- - Can be used with games where a mouse cursor is needed. For example, Roblox, Clicker Heroes.
- - The app currently has three features.
- - **Press Shift + Y to stop clicking.**
- 
-## Indiscriminate clicking (Shift + H) to start 
-- Clicks are indiscriminate based on the last set delay. 
+# ClickerUI 🖱️
 
-## Area based Clicking (Shift + G) to start
- - Set the X1, X2, Y1,Y2 coordinates to create a rectangle or square on the screen to click only when the mouse is in that region.
- - The program automatically stores the data in a file to recall last created rectangle and speed..
+An app designed to assist with automated clicking.
 
-## Color Clicking (Shift + D) to start (experimental)
- - Select a specific color to click on
- - Color Clicker works only at 1 ms click speed irrespective of the click delay you set
+- Can be utilized in games requiring a mouse cursor, such as Roblox and Clicker Heroes.
+- The app currently features three functions.
+- **Press Shift + Y to halt clicking.** ⛔
 
+## Indiscriminate Clicking (Shift + H) to start 🎯
+- Clicks indiscriminately based on the last set delay.
+
+## Area-based Clicking (Shift + G) to start 🌐
+- Set the coordinates (X1, X2, Y1, Y2) to form a rectangle or square on the screen, enabling clicks only within that area.
+- The program automatically saves the data to recall the last created rectangle and its speed.
+
+## Color Clicking (Shift + D) to start (experimental) 🌈
+- Choose a specific color to click on.
+- The Color Clicker operates at a fixed click speed of 1 ms, regardless of the set click delay.
+- It can also manage multiple colors.
