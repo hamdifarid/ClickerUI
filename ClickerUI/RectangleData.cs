@@ -13,15 +13,17 @@ namespace ClickerUI
         public int RectTop { get; set; }
         public int RectBottom { get; set; }
         public int ClickDelay { get; set; }
+        public int Tolerance { get; set; }  
 
         // Constructor
-        public RectangleData(int rectLeft, int rectRight, int rectTop, int rectBottom, int clickDelay)
+        public RectangleData(int rectLeft, int rectRight, int rectTop, int rectBottom, int clickDelay, int tolerance)
         {
             RectLeft = rectLeft;
             RectRight = rectRight;
             RectTop = rectTop;
             RectBottom = rectBottom;
             ClickDelay = clickDelay;
+            Tolerance = tolerance;
         }
     }
 }

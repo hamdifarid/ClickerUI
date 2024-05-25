@@ -1,8 +1,10 @@
 ﻿using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
+using System.Data.SqlTypes;
 using System.Drawing;
 using System.IO;
+using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Threading;
@@ -15,6 +17,7 @@ namespace ClickerUI
 {
     public partial class Form1 : Form
     {
+        #region Variables
         private Thread monitoringThread;
         private Thread indiscriminateThread;
         private Thread monitorColorThread;
@@ -24,32 +27,38 @@ namespace ClickerUI
         private int rectTop;
         private int rectRight;
         private int rectBottom;
+        private int tolerance;
         private int clickDelay;
-
+        private int comboBoxCounter = 1;
+        private int comboBoxLocationY = 260;
+        private List<ComboBox> comboBoxList = new List<ComboBox>();
+        private List<PictureBox> pictureBoxList = new List<PictureBox>();
         private GlobalKeyboardHook keyboardHook;
+        #endregion
+
 
         public Form1()
         {
             InitializeComponent();
             keyboardHook = new GlobalKeyboardHook();
             keyboardHook.KeyPressed += KeyboardHook_KeyPressed;
-            fillComboColorBox();
-            comboBox1.SelectedIndexChanged += ComboBox1_SelectedIndexChanged;
-            pictureBox1.BackColor = Color.White;
-
-
 
         }
-        private void ComboBox1_SelectedIndexChanged(object sender, EventArgs e)
+        private void ComboBox_selectionIndexChanged(ComboBox comboBox, PictureBox pictureBox)
         {
-            Color selectedColor = (Color)comboBox1.SelectedItem;
-
-            pictureBox1.BackColor = selectedColor;
+            changePictureBoxColor(comboBox, pictureBox);
         }
 
-        private void fillComboColorBox()
+        private void changePictureBoxColor(ComboBox comboBox, PictureBox pictureBox)
         {
-            comboBox1.Items.Clear();
+            Color selectedColor = (Color)comboBox.SelectedItem;
+
+            pictureBox.BackColor = selectedColor;
+        }
+
+        private void fillComboColorBox(ComboBox comboBox)
+        {
+            comboBox.Items.Clear();
             List<Color> colors = new List<Color>();
 
             foreach (KnownColor knownColor in Enum.GetValues(typeof(KnownColor)))
@@ -61,20 +70,15 @@ namespace ClickerUI
             // Add colors to the combo box
             foreach (var color in colors)
             {
-                comboBox1.Items.Add(color);
+                comboBox.Items.Add(color);
             }
 
-            if (comboBox1.Items.Count > 0)
+            if (comboBox.Items.Count > 0)
             {
-                comboBox1.SelectedIndex = 0;
+                comboBox.SelectedIndex = 0;
             }
         }
 
-
-
-
-
-        // Start button
         private void button1_Click(object sender, EventArgs e)
         {
             startMethod();
@@ -187,7 +191,9 @@ namespace ClickerUI
             textBox4.Text = rectBottom.ToString();
             clickDelay = textBox5.Text.Length == 0 ? rectData.ClickDelay : Convert.ToInt32(textBox5.Text); //500
             textBox5.Text = clickDelay.ToString();
-            storeInJson(rectLeft, rectRight, rectTop, rectBottom, clickDelay);
+            tolerance = textBox6.Text.Length == 0 ? rectData.Tolerance : Convert.ToInt32(textBox6.Text);
+            textBox6.Text = tolerance.ToString();
+            storeInJson(rectLeft, rectRight, rectTop, rectBottom, clickDelay, tolerance);
 
         }
 
@@ -200,14 +206,13 @@ namespace ClickerUI
                 RectangleData data = JsonConvert.DeserializeObject<RectangleData>(jsonString);
                 return data;
             }
-            RectangleData storeData = storeInJson(798, 1081, 700, 768, 500);
+            RectangleData storeData = storeInJson(798, 1081, 700, 768, 500, 140);
             return storeData;
         }
 
-
-        private RectangleData storeInJson(int rectLeft, int rectRight, int rectTop, int rectBottom, int clickDelay)
+        private RectangleData storeInJson(int rectLeft, int rectRight, int rectTop, int rectBottom, int clickDelay, int tolerance)
         {
-            RectangleData data = new RectangleData(rectLeft, rectRight, rectTop, rectBottom, clickDelay);
+            RectangleData data = new RectangleData(rectLeft, rectRight, rectTop, rectBottom, clickDelay, tolerance);
 
             string jsonString = JsonConvert.SerializeObject(data, Newtonsoft.Json.Formatting.Indented);
 
@@ -221,16 +226,21 @@ namespace ClickerUI
             button3.Enabled = value;
             button4.Enabled = value;
             button5.Enabled = value;
+            button6.Enabled= value;
+            button7.Enabled= value;
             textBox1.Enabled = value;
             textBox2.Enabled = value;
             textBox3.Enabled = value;
             textBox4.Enabled = value;
             textBox5.Enabled = value;
-            comboBox1.Enabled = value;
+            textBox6.Enabled = value;
+
+            foreach (var comboBox in comboBoxList)
+            {
+                comboBox.Enabled = value;
+            }
 
         }
-
-
 
         private bool validate()
         {
@@ -247,7 +257,6 @@ namespace ClickerUI
             return false;
         }
 
-        // Stop button
         private void button2_Click(object sender, EventArgs e)
         {
             stopMethod();
@@ -293,7 +302,7 @@ namespace ClickerUI
         private Color GetAveragePixelColor(int centerX, int centerY, int radius)
         {
             // Define the area around the cursor to sample
-            int startX = centerX- radius ;
+            int startX = centerX - radius;
             int startY = centerY - radius;
             int width = 3 * radius + 1;
             int height = 3 * radius + 1;
@@ -340,9 +349,6 @@ namespace ClickerUI
             return Color.FromArgb(avgR, avgG, avgB);
         }
 
-
-
-
         private bool IsNear(Point p, int left, int right, int top, int bottom, int threshold)
         {
             return (p.X > left - threshold && p.X < right + threshold && p.Y > top - threshold && p.Y < bottom + threshold);
@@ -364,9 +370,6 @@ namespace ClickerUI
                 label1.ForeColor = color;
             }
         }
-
-
-
 
         private void Clicknow()
         {
@@ -414,71 +417,90 @@ namespace ClickerUI
 
         }
 
-        
-
         private void colorClicker()
         {
-            // Thread.Sleep(3000); // Consider removing this sleep if it's not needed
+            float scalingFactor = WindowScale.getScalingFactor();
+            float scale = 1f;
+
+            switch (scalingFactor)
+            {
+                case 1.25f:
+                    scale = 0.8f;
+                    break;
+                case 1.5f:
+                    scale = 0.67f;
+                    break;
+                case 1.75f:
+                    scale = 0.65f;
+                    break;
+            }
+
             while (isRunning)
             {
-                float scalingFactor = WindowScale.getScalingFactor();
                 Point cursorPos = Cursor.Position;
 
-                float scale = 1f; 
-                //0.8f for 125%
-                //
-                if(scalingFactor == 1.25f)
-                {
-                    scale = 0.8f;
-                }
-                else if(scalingFactor == 1.5f)
-                {
-                    scale = 0.67f;
-                }
-
-                // Scale the cursor position
                 int scaledX = (int)(cursorPos.X / scale);
                 int scaledY = (int)(cursorPos.Y / scale);
 
-                // Get the average pixel color using scaled coordinates
-                Color pixelColor = GetAveragePixelColor(scaledX, scaledY, 5);
+                Color avgColor = GetAveragePixelColor(scaledX, scaledY, 2);
 
-                comboBox1.Invoke(new Action(() =>
+                List<Color> selectedColors = new List<Color>();
+
+                foreach (var comboBox in comboBoxList)
                 {
-                    Color targetColor = (Color)comboBox1.SelectedItem;
-                    label13.Invoke(new Action(() =>
+                    comboBox.Invoke(new Action(() =>
                     {
-                        label13.Text = pixelColor.ToString();
-                        label13.ForeColor = pixelColor;
-
-                        if (IsColorSimilar(pixelColor, targetColor, tolerance: 70)) // Adjust tolerance as needed
-                        {
-                            UpdateLabel("Target Color Detected", Color.Green);
-                            // Clicknow();
-                        }
-                        else
-                        {
-                            UpdateLabel("Target Color Not Detected", Color.Red);
-                        }
+                        selectedColors.Add((Color)comboBox.SelectedItem);
                     }));
-                }));
+                }
 
-                Thread.Sleep(clickDelay);
+                foreach (var comboBox in comboBoxList)
+                {
+                    string pictureBoxName = "PictureBox" + comboBox.Name.Substring(comboBox.Name.Length - 1);
+                    PictureBox associatedPictureBox = this.Controls.Find(pictureBoxName, true).FirstOrDefault() as PictureBox;
+
+                    if (associatedPictureBox != null)
+                    {
+                        associatedPictureBox.Invoke(new Action(() =>
+                        {
+                            label13.Text = avgColor.ToString();
+                            label13.ForeColor = avgColor;
+
+                            bool isSimilar = IsColorSimilar(avgColor, selectedColors, tolerance);
+
+                            if (isSimilar)
+                            {
+                                UpdateLabel("Target Color Detected", Color.Green);
+                                ClickNow()
+                            }
+                            else
+                            {
+                                UpdateLabel("Target Color Not Detected", Color.Red);
+                            }
+                        }));
+                    }
+                }
+
+                Thread.Sleep(1);
             }
         }
 
-
-        private bool IsColorSimilar(Color color1, Color color2, int tolerance)
+        private bool IsColorSimilar(Color targetColor, List<Color> selectedColors, int tolerance)
         {
-            // Calculate differences for each color component
-            int deltaR = Math.Abs(color1.R - color2.R);
-            int deltaG = Math.Abs(color1.G - color2.G);
-            int deltaB = Math.Abs(color1.B - color2.B);
+            foreach (Color selectedColor in selectedColors)
+            {
+                int deltaR = Math.Abs(targetColor.R - selectedColor.R);
+                int deltaG = Math.Abs(targetColor.G - selectedColor.G);
+                int deltaB = Math.Abs(targetColor.B - selectedColor.B);
 
-            // Check if the differences fall within the tolerance for each color component
-            return deltaR <= tolerance && deltaG <= tolerance && deltaB <= tolerance;
+
+                if (deltaR <= tolerance && deltaG <= tolerance && deltaB <= tolerance)
+                {
+                    return true;
+                }
+            }
+            return false;
         }
-
 
         private void startIndiscriminateClicker()
         {
@@ -508,6 +530,52 @@ namespace ClickerUI
             {
                 Clicknow();
                 Thread.Sleep(clickDelay);
+            }
+        }
+
+        private void button6_Click(object sender, EventArgs e)
+        {
+            ComboBox newComboBox = new ComboBox();
+            PictureBox newPictureBox = new PictureBox();
+            newComboBox.FormattingEnabled = true;
+            newComboBox.Name = "ColorBox" + comboBoxCounter;
+            newComboBox.Location = new Point(613, comboBoxLocationY);
+            newPictureBox.Name = "PictureBox" + comboBoxCounter;
+            newPictureBox.Size = new Size(31, 21);
+            newPictureBox.Location = new Point(576, comboBoxLocationY);
+
+            newComboBox.SelectedIndexChanged += (s, ev) => ComboBox_selectionIndexChanged(newComboBox, newPictureBox);
+
+            fillComboColorBox(newComboBox);
+            comboBoxCounter++;
+            comboBoxLocationY += 25;
+
+            this.Controls.Add(newComboBox);
+            this.Controls.Add(newPictureBox);
+
+            comboBoxList.Add(newComboBox);
+            pictureBoxList.Add(newPictureBox);
+        }
+
+        private void button7_Click(object sender, EventArgs e)
+        {
+            if (comboBoxList.Count > 0 && pictureBoxList.Count > 0)
+            {
+                ComboBox lastComboBox = comboBoxList[comboBoxList.Count - 1];
+                PictureBox lastPictureBox = pictureBoxList[pictureBoxList.Count - 1];
+
+                this.Controls.Remove(lastComboBox);
+                this.Controls.Remove(lastPictureBox);
+
+                comboBoxList.RemoveAt(comboBoxList.Count - 1);
+                pictureBoxList.RemoveAt(pictureBoxList.Count - 1);
+
+                comboBoxCounter--;
+                comboBoxLocationY -= 20;
+            }
+            else
+            {
+                MessageBox.Show("No ComboBox or PictureBox to delete.", "Info", MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
         }
 
