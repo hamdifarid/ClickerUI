@@ -185,13 +185,13 @@ namespace ClickerUI
             rectRight = textBox2.Text.Length == 0 ? rectData.RectRight : Convert.ToInt32(textBox2.Text); //1081
             rectTop = textBox3.Text.Length == 0 ? rectData.RectTop : Convert.ToInt32(textBox3.Text); // 700
             rectBottom = textBox4.Text.Length == 0 ? rectData.RectBottom : Convert.ToInt32(textBox4.Text); // 768
+            clickDelay = textBox5.Text.Length == 0 ? rectData.ClickDelay : Convert.ToInt32(textBox5.Text); //500
+            tolerance = textBox6.Text.Length == 0 ? rectData.Tolerance : Convert.ToInt32(textBox6.Text);
             textBox1.Text = rectLeft.ToString();
             textBox2.Text = rectRight.ToString();
             textBox3.Text = rectTop.ToString();
             textBox4.Text = rectBottom.ToString();
-            clickDelay = textBox5.Text.Length == 0 ? rectData.ClickDelay : Convert.ToInt32(textBox5.Text); //500
             textBox5.Text = clickDelay.ToString();
-            tolerance = textBox6.Text.Length == 0 ? rectData.Tolerance : Convert.ToInt32(textBox6.Text);
             textBox6.Text = tolerance.ToString();
             storeInJson(rectLeft, rectRight, rectTop, rectBottom, clickDelay, tolerance);
 
@@ -214,7 +214,7 @@ namespace ClickerUI
         {
             RectangleData data = new RectangleData(rectLeft, rectRight, rectTop, rectBottom, clickDelay, tolerance);
 
-            string jsonString = JsonConvert.SerializeObject(data, Newtonsoft.Json.Formatting.Indented);
+            string jsonString = JsonConvert.SerializeObject(data, Formatting.Indented);
 
             File.WriteAllText("rectangleData.json", jsonString);
             return data;
@@ -434,7 +434,7 @@ namespace ClickerUI
                     scale = 0.65f;
                     break;
             }
-
+            clickDelay = 1;
             while (isRunning)
             {
                 Point cursorPos = Cursor.Position;
@@ -471,7 +471,7 @@ namespace ClickerUI
                             if (isSimilar)
                             {
                                 UpdateLabel("Target Color Detected", Color.Green);
-                                Clicknow();
+                                //Clicknow();
                             }
                             else
                             {
