@@ -1,7 +1,8 @@
 # ClickerUI
 An app made to help people with automated clicking. 
  - Can be used with games where a mouse cursor is needed. For example, Roblox, Clicker Heroes.
- - The app currently has three features. - **Press Shift + Y to stop clicking.**
+ - The app currently has three features.
+ - **Press Shift + Y to stop clicking.**
 ## Indiscriminate clicking (Shift + H) to start 
 - Clicks are indiscriminate based on the last set delay. 
 ## Area based Clicking (Shift + G) to start
