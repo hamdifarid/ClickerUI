@@ -411,6 +411,7 @@ namespace ClickerUI
             //    g.DrawEllipse(pen, centerX - radius, centerY - radius, 2 * radius, 2 * radius);
             //}
 
+
             int totalR = 0, totalG = 0, totalB = 0;
             for (int y = 0; y < height; y++)
             {
