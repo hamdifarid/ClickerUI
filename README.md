@@ -17,6 +17,7 @@
 ## Color Clicking (Shift + D) to start (EXPERIMENTAL MAY NOT WORK PROPERLY YET) !!!
 
  - Select a specific color to click on
+ - Color Clicker works only at 1 ms click speed irrespective of the click delay you set
 
 
 
