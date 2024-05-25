@@ -11,7 +11,7 @@ An app made to help people with automated clicking. 
  - Set the X1, X2, Y1,Y2 coordinates to create a rectangle or square on the screen to click only when the mouse is in that region.
  - The program automatically stores the data in a file to recall last created rectangle and speed..
 
-## Color Clicking (Shift + D) to start (EXPERIMENTAL MAY NOT WORK PROPERLY YET) !!!
+## Color Clicking (Shift + D) to start (experimental)
  - Select a specific color to click on
  - Color Clicker works only at 1 ms click speed irrespective of the click delay you set
 
