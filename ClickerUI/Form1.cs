@@ -471,7 +471,8 @@ namespace ClickerUI
                             if (isSimilar)
                             {
                                 UpdateLabel("Target Color Detected", Color.Green);
-                                //Clicknow();
+
+                                Clicknow();
                             }
                             else
                             {
