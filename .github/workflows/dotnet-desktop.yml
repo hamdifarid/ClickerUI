@@ -2,10 +2,8 @@ name: .NET Core Desktop
 
 on:
   push:
-    branches: [ "master" ]
-  pull_request:
-    branches: [ "master" ]
-  workflow_dispatch:
+    tags:
+      - '*'
 
 jobs:
   build:
@@ -18,8 +16,6 @@ jobs:
 
     env:
       Solution_Name: ClickerUI                       # Replace with your solution name
-      # Wap_Project_Directory: your-wap-project-directory-name    # Replace if using WAP project
-      # Wap_Project_Path: your-wap-project-path                   # Replace if using WAP project
 
     steps:
     - name: Checkout
@@ -40,15 +36,6 @@ jobs:
       env:
         Configuration: ${{ matrix.configuration }}
 
-    # If using WAP project, uncomment the following to create the app package
-    # - name: Create the app package
-    #   run: msbuild $env:Wap_Project_Path /p:Configuration=$env:Configuration /p:UapAppxPackageBuildMode=$env:Appx_Package_Build_Mode /p:AppxBundle=$env:Appx_Bundle /p:PackageCertificateKeyFile=GitHubActionsWorkflow.pfx /p:PackageCertificatePassword=${{ secrets.Pfx_Key }}
-    #   env:
-    #     Appx_Bundle: Always
-    #     Appx_Bundle_Platforms: x86|x64
-    #     Appx_Package_Build_Mode: StoreUpload
-    #     Configuration: ${{ matrix.configuration }}
-
     - name: Build the solution
       run: msbuild $env:Solution_Name /p:Configuration=$env:Configuration
       env:
@@ -59,10 +46,24 @@ jobs:
         mkdir -p release
         cp -R $env:Solution_Name\bin\$env:Configuration\* release/
 
-    - name: Upload artifact to GitHub Releases
-      uses: softprops/action-gh-release@v1
+    - name: Create GitHub Release
+      id: create_release
+      uses: actions/create-release@v1
       with:
-        files: release/**
+        tag_name: ${{ github.ref_name }}
+        release_name: Release ${{ github.ref_name }}
+        draft: false
+        prerelease: false
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Upload artifact to GitHub Releases
+      uses: actions/upload-release-asset@v1
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: release/
+        asset_name: release.zip
+        asset_content_type: application/zip
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
