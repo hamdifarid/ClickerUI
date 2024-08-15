@@ -65,6 +65,7 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
     - name: Upload artifact to GitHub Releases
+      if: steps.create_release.outcome == 'success'
       uses: softprops/action-gh-release@v1
       with:
         files: release/**
