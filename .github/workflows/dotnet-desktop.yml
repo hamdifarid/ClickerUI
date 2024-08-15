@@ -59,8 +59,10 @@ jobs:
         tag_name: v${{ github.run_number }}
         release_name: Release v${{ github.run_number }}
         draft: false
+        replacesArtifacts: false
         prerelease: false
         overwrite: true
+        allowUpdates: true
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
