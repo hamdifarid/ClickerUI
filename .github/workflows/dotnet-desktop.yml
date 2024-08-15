@@ -7,9 +7,11 @@ on:
     branches: [ "master" ]
   workflow_dispatch:
 
+permissions:
+  contents: write  # This allows the token to create and upload to releases.
+
 jobs:
   build:
-
     strategy:
       matrix:
         configuration: [Debug, Release]
@@ -17,7 +19,7 @@ jobs:
     runs-on: windows-latest
 
     env:
-      Solution_Name: ClickerUI                       # Replace with your solution name
+      Solution_Name: ClickerUI
 
     steps:
     - name: Checkout
@@ -57,7 +59,7 @@ jobs:
         draft: false
         prerelease: false
       env:
-        GITHUB_TOKEN: ${{ secrets.PAT_TOKEN }}
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
     - name: Upload artifact to GitHub Releases
       uses: softprops/action-gh-release@v1
@@ -65,4 +67,4 @@ jobs:
         files: release/**
         tag_name: v1.0.0
       env:
-        GITHUB_TOKEN: ${{ secrets.PAT_TOKEN }}
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
