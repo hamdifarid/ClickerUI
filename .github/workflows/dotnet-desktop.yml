@@ -57,7 +57,7 @@ jobs:
         draft: false
         prerelease: false
       env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        GITHUB_TOKEN: ${{ secrets.PAT_TOKEN }}
 
     - name: Upload artifact to GitHub Releases
       uses: softprops/action-gh-release@v1
@@ -65,4 +65,4 @@ jobs:
         files: release/**
         tag_name: v1.0.0
       env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        GITHUB_TOKEN: ${{ secrets.PAT_TOKEN }}
