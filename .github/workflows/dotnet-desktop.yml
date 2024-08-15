@@ -49,7 +49,6 @@ jobs:
       run: |
         mkdir release
         Copy-Item -Path "$env:Solution_Name\bin\$env:Configuration\*" -Destination "release" -Recurse -Force
-        dir release
       env:
         Configuration: ${{ matrix.configuration }}
 
@@ -60,13 +59,10 @@ jobs:
         tag_name: v${{ github.run_number }}
         release_name: Release v${{ github.run_number }}
         draft: false
+        replacesArtifacts: false
         prerelease: false
         overwrite: true
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-    - name: Debug - List releases
-      run: gh release list
+        allowUpdates: true
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -76,11 +72,5 @@ jobs:
       with:
         files: release/**
         tag_name: v${{ github.run_number }}
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-    - name: Debug - Check Release URL
-      run: |
-        echo "Checking if release exists at https://github.com/${{ github.repository }}/releases/tag/v${{ github.run_number }}"
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
